@@ -1,0 +1,72 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:lumiai/core/app_settings.dart';
+import 'package:lumiai/core/app_settings_controller.dart';
+import 'package:lumiai/core/locale/locale_controller.dart';
+import 'package:lumiai/core/locale/locale_scope.dart';
+import 'package:lumiai/l10n_gen/app_localizations.dart';
+import 'package:lumiai/pages/main/main_shell.dart';
+import 'package:lumiai/pages/setup/setup_gate.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final prefs = await SharedPreferences.getInstance();
+  final settingsController = AppSettingsController(prefs, AppSettings.defaults);
+
+  final localeController = await LocaleController.load();
+
+  runApp(LumiAIApp(
+    prefs: prefs,
+    settingsController: settingsController,
+    localeController: localeController,
+  ));
+}
+
+class LumiAIApp extends StatelessWidget {
+  final SharedPreferences prefs;
+  final AppSettingsController settingsController;
+  final LocaleController localeController;
+
+  const LumiAIApp({
+    super.key,
+    required this.prefs,
+    required this.settingsController,
+    required this.localeController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<AppSettings>(
+      valueListenable: settingsController,
+      builder: (context, s, _) {
+        return AnimatedBuilder(
+          animation: localeController,
+          builder: (context, __) {
+            return LocaleScope(
+              controller: localeController,
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData.light(),
+                darkTheme: ThemeData.dark(),
+                themeMode: s.themeMode,
+
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+
+                locale: localeController.locale,
+
+                home: SetupGate(
+                  prefs: prefs,
+                  controller: settingsController,
+                  child: MainShell(settings: settingsController),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}

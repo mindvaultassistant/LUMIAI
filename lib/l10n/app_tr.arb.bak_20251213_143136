@@ -1,0 +1,10 @@
+{
+  "@@locale": "tr",
+  "appTitle": "LumiAI",
+  "settingsTitle": "Ayarlar",
+  "languageTitle": "Dil",
+  "exitGuest": "Misafirden çık",
+  "generate": "Üret",
+  "coins": "Coin",
+  "yourBalance": "Bakiye"
+}

@@ -1,0 +1,540 @@
+import 'dart:async';
+import 'package:lumiai/l10n_gen/app_localizations.dart';
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class OnboardingAIScene extends StatefulWidget {
+  const OnboardingAIScene({super.key, required this.onDone});
+  final VoidCallback onDone;
+
+  static const String kPrefKey = "onboarding_done_v1";
+
+  static Future<bool> isDone() async {
+    final sp = await SharedPreferences.getInstance();
+    return sp.getBool(kPrefKey) ?? false;
+  }
+
+  static Future<void> markDone() async {
+    final sp = await SharedPreferences.getInstance();
+    await sp.setBool(kPrefKey, true);
+  }
+
+  @override
+  State<OnboardingAIScene> createState() => _OnboardingAISceneState();
+}
+
+class _OnboardingAISceneState extends State<OnboardingAIScene>
+    with TickerProviderStateMixin {
+  late final AnimationController _bg;
+  late final AnimationController _pulse;
+  late final AnimationController _avatar;
+  late final AnimationController _text;
+  late final AnimationController _cards;
+
+  int _step = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _bg = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 20),
+    )..repeat();
+    _pulse = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _avatar = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _text = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+    _cards = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _runTimeline();
+  }
+
+  void _runTimeline() {
+    _setStep(0);
+    _timer = Timer.periodic(const Duration(milliseconds: 50), (_) {});
+    Future<void>.delayed(const Duration(milliseconds: 1500), () async {
+      if (!mounted) return;
+      _setStep(1);
+      await _avatar.forward();
+      await Future<void>.delayed(const Duration(milliseconds: 800));
+      if (!mounted) return;
+      _setStep(2);
+      _text.forward(from: 0);
+      await Future<void>.delayed(const Duration(milliseconds: 3000));
+      if (!mounted) return;
+      _setStep(3);
+      _text.forward(from: 0);
+      await Future<void>.delayed(const Duration(milliseconds: 3000));
+      if (!mounted) return;
+      _setStep(4);
+      _text.forward(from: 0);
+      await Future<void>.delayed(const Duration(milliseconds: 3000));
+      if (!mounted) return;
+      _cards.forward(from: 0);
+    });
+  }
+
+  void _setStep(int v) {
+    if (!mounted) return;
+    setState(() => _step = v);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _bg.dispose();
+    _pulse.dispose();
+    _avatar.dispose();
+    _text.dispose();
+    _cards.dispose();
+    super.dispose();
+  }
+
+  Future<void> _finish({required bool mark}) async {
+    if (mark) {
+      await OnboardingAIScene.markDone();
+    }
+    widget.onDone();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          AnimatedBuilder(
+            animation: _bg,
+            builder: (_, __) {
+              final t = _bg.value;
+              final a = 0.35 + 0.25 * math.sin(t * math.pi * 2);
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: const Alignment(-1, -1),
+                    end: const Alignment(1, 1),
+                    colors: [
+                      const Color(0xFF050A16),
+                      Color.lerp(
+                        const Color(0xFF0A1440),
+                        const Color(0xFF2B0A3D),
+                        a,
+                      )!,
+                      const Color(0xFF02040A),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(painter: _StarNoisePainter(seed: 42)),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      _MiniIconButton(
+                        icon: Icons.person_add_alt_1_outlined,
+                        onTap: () {},
+                      ),
+                      const Spacer(),
+                      const _MiniPill(text: "LumiAI", icon: Icons.auto_awesome),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => _finish(mark: false),
+                        child: Text(AppLocalizations.of(context)!.skip),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedBuilder(
+                            animation: _pulse,
+                            builder: (_, __) {
+                              final p = _pulse.value;
+                              final glow = 0.2 + 0.25 * p;
+                              return Container(
+                                width: 110,
+                                height: 110,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF4CD7FF,
+                                      ).withOpacity(glow),
+                                      blurRadius: 32,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Container(
+                                      width: 110,
+                                      height: 110,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: const Color(
+                                            0xFF4CD7FF,
+                                          ).withOpacity(0.55),
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 74,
+                                      height: 74,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            const Color(
+                                              0xFF4CD7FF,
+                                            ).withOpacity(0.95),
+                                            const Color(
+                                              0xFF7C4DFF,
+                                            ).withOpacity(0.85),
+                                          ],
+                                        ),
+                                      ),
+                                      child: const Center(
+                                        child: Text(
+                                          "L",
+                                          style: TextStyle(
+                                            fontSize: 36,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 18),
+                          if (_step >= 1)
+                            FadeTransition(
+                              opacity: _avatar,
+                              child: SlideTransition(
+                                position:
+                                    Tween<Offset>(
+                                      begin: const Offset(0, 0.10),
+                                      end: Offset.zero,
+                                    ).animate(
+                                      CurvedAnimation(
+                                        parent: _avatar,
+                                        curve: Curves.easeOut,
+                                      ),
+                                    ),
+                                child: const _AvatarCard(),
+                              ),
+                            ),
+                          const SizedBox(height: 16),
+                          if (_step >= 2)
+                            FadeTransition(
+                              opacity: CurvedAnimation(
+                                parent: _text,
+                                curve: Curves.easeOut,
+                              ),
+                              child: _StepText(step: _step),
+                            ),
+                          const SizedBox(height: 14),
+                          if (_step >= 4)
+                            FadeTransition(
+                              opacity: CurvedAnimation(
+                                parent: _cards,
+                                curve: Curves.easeOut,
+                              ),
+                              child: SlideTransition(
+                                position:
+                                    Tween<Offset>(
+                                      begin: const Offset(0, 0.10),
+                                      end: Offset.zero,
+                                    ).animate(
+                                      CurvedAnimation(
+                                        parent: _cards,
+                                        curve: Curves.easeOut,
+                                      ),
+                                    ),
+                                child: const Column(
+                                  children: [
+                                    _ExampleCard(
+                                      title: "Viral Reels Fikri",
+                                      subtitle: "Hook + sahne akışı + caption",
+                                      icon: Icons.play_circle_outline,
+                                    ),
+                                    SizedBox(height: 10),
+                                    _ExampleCard(
+                                      title: "Görsel Prompt (Ultra)",
+                                      subtitle: "Sinematik, gerçekçi, premium",
+                                      icon: Icons.image_outlined,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () => _finish(mark: true),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: const Color(0xFF4CD7FF),
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      "Devam",
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "Başlarken: tema, dil, hesap sonra — önce üretim hissi.",
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StepText extends StatelessWidget {
+  const _StepText({required this.step});
+  final int step;
+
+  @override
+  Widget build(BuildContext context) {
+    String t;
+    if (step == 2) {
+      t = "Ben Lumi. Fikrini üretime çeviririm.";
+    } else if (step == 3) {
+      t = "Metin, görsel ve video akışını tek yerden üret.";
+    } else {
+      t = "Şablon seç, düzenle, kaydet — istersen sat.";
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(0.10)),
+      ),
+      child: Text(
+        t,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          height: 1.25,
+        ),
+      ),
+    );
+  }
+}
+
+class _AvatarCard extends StatelessWidget {
+  const _AvatarCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: Colors.white.withOpacity(0.07),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: Color(0xFF4CD7FF),
+            child: Icon(Icons.auto_awesome, color: Colors.black),
+          ),
+          SizedBox(width: 10),
+          Text(
+            "Lumi",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+          SizedBox(width: 10),
+          Text(
+            "başlıyor…",
+            style: TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExampleCard extends StatelessWidget {
+  const _ExampleCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: Colors.white.withOpacity(0.06),
+        border: Border.all(color: Colors.white.withOpacity(0.10)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF4CD7FF)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(subtitle, style: const TextStyle(color: Colors.white70)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniPill extends StatelessWidget {
+  const _MiniPill({required this.text, required this.icon});
+  final String text;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: Colors.white.withOpacity(0.06),
+        border: Border.all(color: Colors.white.withOpacity(0.10)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: const Color(0xFF4CD7FF)),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniIconButton extends StatelessWidget {
+  const _MiniIconButton({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkResponse(
+      onTap: onTap,
+      radius: 26,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withOpacity(0.06),
+          border: Border.all(color: Colors.white.withOpacity(0.10)),
+        ),
+        child: Icon(icon, color: Colors.white),
+      ),
+    );
+  }
+}
+
+class _StarNoisePainter extends CustomPainter {
+  _StarNoisePainter({required this.seed});
+  final int seed;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rnd = math.Random(seed);
+    final paint = Paint()..color = Colors.white.withOpacity(0.12);
+    for (int i = 0; i < 160; i++) {
+      final x = rnd.nextDouble() * size.width;
+      final y = rnd.nextDouble() * size.height;
+      final r = rnd.nextDouble() * 1.2;
+      canvas.drawCircle(Offset(x, y), r, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}

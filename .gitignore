@@ -1,0 +1,29 @@
+# Secrets
+.env
+
+# Node
+node_modules/
+backend/node_modules/
+
+# Flutter/Dart
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+coverage/
+
+# IDE
+.idea/
+.vscode/
+
+# macOS / iOS generated
+macos/Pods/
+ios/Pods/
+macos/Podfile.lock
+ios/Podfile.lock
+
+# Project internal logs/backups (keep local)
+_tarik_logs/
+PROGRESS_LOGS/
+NOTES/

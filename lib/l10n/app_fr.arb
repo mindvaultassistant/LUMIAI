@@ -1,0 +1,14 @@
+{
+  "@@locale": "fr",
+  "appTitle": "LumiAI",
+  "settingsTitle": "Settings",
+  "languageTitle": "Language",
+  "account": "Account",
+  "guestNotSignedIn": "Guest / Not signed in",
+  "actions": "Actions",
+  "signOut": "Sign out",
+  "exitGuest": "Exit guest",
+  "generate": "Generate",
+  "coins": "Coins",
+  "yourBalance": "Your balance"
+}

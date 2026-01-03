@@ -1,0 +1,43 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:lumiai/core/app_settings.dart';
+import 'package:lumiai/core/app_settings_controller.dart';
+import 'package:lumiai/pages/main/main_shell.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final prefs = await SharedPreferences.getInstance();
+
+  // Controller 2 argüman ister: (prefs, initial)
+  final settingsController = AppSettingsController(
+    prefs,
+    AppSettings.defaults,
+  );
+
+  runApp(LumiAIApp(settingsController: settingsController));
+}
+
+class LumiAIApp extends StatelessWidget {
+  final AppSettingsController settingsController;
+
+  const LumiAIApp({super.key, required this.settingsController});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<AppSettings>(
+      valueListenable: settingsController,
+      builder: (context, settings, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark(),
+          themeMode: settings.themeMode,
+          locale: settings.locale,
+          home: MainShell(settings: settingsController),
+        );
+      },
+    );
+  }
+}

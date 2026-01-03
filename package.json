@@ -1,0 +1,6 @@
+node -e "
+const fs=require('fs');
+const p=require('./package.json');
+p.scripts={start:'node server.js'};
+fs.writeFileSync('package.json', JSON.stringify(p,null,2));
+"

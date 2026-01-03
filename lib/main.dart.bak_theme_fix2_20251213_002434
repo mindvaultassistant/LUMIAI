@@ -1,0 +1,342 @@
+import 'package:flutter/material.dart';
+import 'ui/ultra_surface.dart';
+import 'ui/ultra_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'core/supabase_client.dart';
+import 'services/auth_service.dart';
+import 'services/ai_character_service.dart';
+import 'widgets/character_picker.dart';
+import 'pages/settings_page.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SB.init();
+  runApp(const LumiAIApp());
+}
+
+class LumiAIApp extends StatelessWidget {
+  const LumiAIApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: UltraTheme.dark(),
+
+      title: 'LumiAI',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.blue,
+      ),
+      home: const BootGate(),
+    );
+  }
+}
+
+/// BootGate:
+/// - İlk açılış akışı burada kilitli.
+/// - Session varsa direkt Home.
+/// - Session yoksa Auth ekranı.
+/// - Auth ekranında "Skip (Guest)" var.
+class BootGate extends StatefulWidget {
+  const BootGate({super.key});
+
+  @override
+  State<BootGate> createState() => _BootGateState();
+}
+
+class _BootGateState extends State<BootGate> {
+  bool _ready = false;
+  bool _guest = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final sp = await SharedPreferences.getInstance();
+    final guest = sp.getBool('guest_mode') ?? false;
+    setState(() {
+      _guest = guest;
+      _ready = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final user = AuthService.currentUser;
+
+    if (user != null) {
+      return HomePage(
+        onLogout: () async {
+          await AuthService.signOut();
+          setState(() {});
+        },
+      );
+    }
+
+    if (_guest) {
+      return HomePage(
+        onLogout: () async {
+          final sp = await SharedPreferences.getInstance();
+          await sp.remove('guest_mode');
+          setState(() => _guest = false);
+        },
+      );
+    }
+
+    return AuthPage(
+      onAuthed: () => setState(() {}),
+      onGuest: () async {
+        final sp = await SharedPreferences.getInstance();
+        await sp.setBool('guest_mode', true);
+        setState(() => _guest = true);
+      },
+    );
+  }
+}
+
+class AuthPage extends StatefulWidget {
+  final VoidCallback onAuthed;
+  final VoidCallback onGuest;
+
+  const AuthPage({super.key, required this.onAuthed, required this.onGuest});
+
+  @override
+  State<AuthPage> createState() => _AuthPageState();
+}
+
+class _AuthPageState extends State<AuthPage> {
+  final _email = TextEditingController();
+  final _pass = TextEditingController();
+  bool _loading = false;
+  String? _err;
+
+  Future<void> _run(Future<void> Function() fn) async {
+    setState(() {
+      _loading = true;
+      _err = null;
+    });
+    try {
+      await fn();
+      widget.onAuthed();
+    } catch (e) {
+      setState(() => _err = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('LumiAI')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: _email,
+              decoration: const InputDecoration(labelText: 'Email'),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _pass,
+              decoration: const InputDecoration(labelText: 'Password'),
+              obscureText: true,
+            ),
+            const SizedBox(height: 16),
+
+            if (_err != null)
+              Text(_err!, style: const TextStyle(color: Colors.red)),
+
+            const SizedBox(height: 8),
+
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _loading
+                        ? null
+                        : () => _run(() async {
+                              await AuthService.signUp(
+                                email: _email.text.trim(),
+                                password: _pass.text,
+                              );
+                            }),
+                    child: const Text('Sign up'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _loading
+                        ? null
+                        : () => _run(() async {
+                              await AuthService.signIn(
+                                email: _email.text.trim(),
+                                password: _pass.text,
+                              );
+                            }),
+                    child: const Text('Sign in'),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Skip (Guest)
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: _loading ? null : widget.onGuest,
+                child: const Text('Skip for now (Guest)'),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+            const Text(
+              'Not: Email doğrulaması açıksa "Sign up" sonrası mail gelebilir.',
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  final Future<void> Function() onLogout;
+
+  const HomePage({super.key, required this.onLogout});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final _prompt = TextEditingController();
+  int _balance = 999;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = AuthService.currentUser;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('LumiAI'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () async {
+              final changed = await Navigator.of(context).push<bool>(
+                MaterialPageRoute(builder: (_) => const SettingsPage()),
+              );
+              if (changed == true && mounted) {
+                // sign out olduysa authgate’e düş
+                setState(() {});
+              }
+            },
+          ),
+          TextButton(
+            onPressed: () async => widget.onLogout(),
+            child: Text(user == null ? 'Exit guest' : 'Sign out'),
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text('Your balance  $_balance'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text('Coins'),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Character dropdown (DB’den çekiyor)
+            const CharacterPicker(),
+            const SizedBox(height: 12),
+
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TextField(
+                  controller: _prompt,
+                  maxLines: null,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    labelText: 'Prompt',
+                    hintText: 'Type your request...',
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  // Şimdilik mevcut fallback üretim (backend bağlandıktan sonra gerçek AI çağrısı)
+                  // Burada coin düşümünü server authoritative yapacağız (sonraki adım).
+                  setState(() => _balance = (_balance - 5).clamp(0, 999999));
+                  if (mounted) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ResultPage(text: _prompt.text.trim()),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Generate'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ResultPage extends StatelessWidget {
+  final String text;
+  const ResultPage({super.key, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Çıktı hazır')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(text.isEmpty ? '(boş)' : text),
+      ),
+    );
+  }
+}

@@ -1,0 +1,59 @@
+import 'language_page.dart';
+import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = AuthService.currentUser;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Settings')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const Text('Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              user == null ? 'Guest / Not signed in' : 'Signed in: ${user.email ?? user.id}',
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          const Text('Actions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+
+          ElevatedButton(
+            onPressed: user == null
+                ? null
+                : () async {
+                    await AuthService.signOut();
+                    if (context.mounted) Navigator.of(context).pop(true);
+                  },
+            child: const Text('Sign out'),
+          ),
+          const SizedBox(height: 8),
+
+          OutlinedButton(
+            onPressed: () {
+              // Dil seçimi (sonraki adımda 31 dil + App Language API’ye bağlayacağız)
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Language settings: next step')),
+              );
+            },
+            child: const Text('Language'),
+          ),
+        ],
+      ),
+    );
+  }
+}

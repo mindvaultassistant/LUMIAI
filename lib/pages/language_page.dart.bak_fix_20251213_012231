@@ -1,0 +1,54 @@
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class LanguagePage extends StatefulWidget {
+  const LanguagePage({super.key});
+
+  @override
+  State<LanguagePage> createState() => _LanguagePageState();
+}
+
+class _LanguagePageState extends State<LanguagePage> {
+  static const _key = 'app_locale';
+  String _current = 'tr';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final sp = await SharedPreferences.getInstance();
+    setState(() => _current = sp.getString(_key) ?? 'tr');
+  }
+
+  Future<void> _set(String code) async {
+    final sp = await SharedPreferences.getInstance();
+    await sp.setString(_key, code);
+    if (!mounted) return;
+    Navigator.pop(context, code);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = const {
+      'tr': 'Türkçe',
+      'en': 'English',
+    };
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Language')),
+      body: ListView(
+        children: items.entries.map((e) {
+          final selected = e.key == _current;
+          return ListTile(
+            title: Text(e.value),
+            trailing: selected ? const Icon(Icons.check) : null,
+            onTap: () => _set(e.key),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "@@locale": "tr",
+  "appTitle": "LumiAI",
+  "settingsTitle": "Ayarlar",
+  "languageTitle": "Dil",
+  "account": "Hesap",
+  "guestNotSignedIn": "Misafir / Giriş yapılmadı",
+  "actions": "İşlemler",
+  "signOut": "Çıkış yap",
+  "exitGuest": "Misafirden çık",
+  "generate": "Üret",
+  "coins": "Coin",
+  "yourBalance": "Bakiye"
+}

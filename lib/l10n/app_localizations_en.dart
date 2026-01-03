@@ -1,0 +1,76 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+import 'package:lumiai/l10n_gen/app_localizations.dart';
+// ignore_for_file: type=lint
+
+/// The translations for English (`en`).
+class AppLocalizationsEn extends AppLocalizations {
+  AppLocalizationsEn([String locale = 'en']) : super(locale);
+
+  @override
+  String get appTitle => 'LumiAI';
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get languageTitle => 'Language';
+
+  @override
+  String get exitGuest => 'Exit guest';
+
+  @override
+  String get generate => 'Generate';
+
+  @override
+  String get coins => 'Coins';
+
+  @override
+  String get yourBalance => 'Your balance';
+
+  @override
+  String get signUp => 'Sign up';
+
+  @override
+  String get signIn => 'Sign in';
+
+  @override
+  String get skipGuest => 'Skip for now (Guest)';
+
+  @override
+  String get emailVerifyNote =>
+      'Note: If email verification is enabled, a mail may arrive after “Sign up”.';
+
+  @override
+  String get outputReady => 'Output ready';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get guestNotSignedIn => 'Guest / Not signed in';
+
+  @override
+  String get actions => 'Actions';
+
+  @override
+  String get signOut => 'Sign out';
+
+  @override
+  String get noCharacters => 'No characters';
+
+  @override
+  String get skip => 'Skip';
+
+  @override
+  String get next => 'Continue';
+
+  @override
+  String get onboardingTitle => 'Creation starts with LumiAI';
+
+  @override
+  String get onboardingSubtitle =>
+      'Film scene • Storyboard • Viral content • Product copy\nPick a template with one tap; the prompt fills in.';
+}

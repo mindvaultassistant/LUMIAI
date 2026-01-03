@@ -1,0 +1,80 @@
+import 'package:flutter/material.dart';
+import 'package:lumiai/l10n_gen/app_localizations.dart';
+import 'package:lumiai/core/locale/locale_scope.dart';
+
+class LanguagePage extends StatelessWidget {
+  const LanguagePage({super.key});
+
+  static const List<Map<String, String>> languages = [
+    {"code": "tr", "name": "Türkçe"},
+    {"code": "en", "name": "English"},
+    {"code": "es", "name": "Español"},
+    {"code": "fr", "name": "Français"},
+    {"code": "de", "name": "Deutsch"},
+    {"code": "it", "name": "Italiano"},
+    {"code": "pt", "name": "Português"},
+    {"code": "ru", "name": "Русский"},
+    {"code": "ar", "name": "العربية"},
+    {"code": "fa", "name": "فارسی"},
+    {"code": "ur", "name": "اردو"},
+    {"code": "hi", "name": "हिन्दी"},
+    {"code": "bn", "name": "বাংলা"},
+    {"code": "id", "name": "Bahasa Indonesia"},
+    {"code": "ms", "name": "Bahasa Melayu"},
+    {"code": "vi", "name": "Tiếng Việt"},
+    {"code": "th", "name": "ไทย"},
+    {"code": "zh", "name": "中文"},
+    {"code": "ja", "name": "日本語"},
+    {"code": "ko", "name": "한국어"},
+    {"code": "nl", "name": "Nederlands"},
+    {"code": "sv", "name": "Svenska"},
+    {"code": "no", "name": "Norsk"},
+    {"code": "da", "name": "Dansk"},
+    {"code": "fi", "name": "Suomi"},
+    {"code": "pl", "name": "Polski"},
+    {"code": "uk", "name": "Українська"},
+    {"code": "el", "name": "Ελληνικά"},
+    {"code": "he", "name": "עברית"},
+    {"code": "ro", "name": "Română"},
+    {"code": "cs", "name": "Čeština"},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = LocaleScope.of(context);
+    final current = controller.locale.languageCode.toLowerCase();
+
+    return Scaffold(
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.languageTitle)),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(12),
+        itemCount: languages.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (context, i) {
+          final code = languages[i]["code"]!;
+          final name = languages[i]["name"]!;
+          final selected = code.toLowerCase() == current;
+
+          return ListTile(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            tileColor: Theme.of(context).cardColor,
+            title: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            subtitle: Text(code),
+            trailing: selected
+                ? const Icon(Icons.check_circle)
+                : const Icon(Icons.circle_outlined),
+            onTap: () async {
+              await controller.setLocale(Locale(code));
+              if (context.mounted) Navigator.pop(context);
+            },
+          );
+        },
+      ),
+    );
+  }
+}
