@@ -1,13 +1,28 @@
+# Secrets
 .env
+
+# Node
 node_modules/
 backend/node_modules/
+
+# Flutter/Dart
 .dart_tool/
 build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+coverage/
+
+# iOS/macOS
 ios/Pods/
 macos/Pods/
 ios/Podfile.lock
 macos/Podfile.lock
+
+# Local only
 NOTES/
 PROGRESS_LOGS/
 _tarik_logs/
 .DS_Store
+.idea/
+.vscode/
