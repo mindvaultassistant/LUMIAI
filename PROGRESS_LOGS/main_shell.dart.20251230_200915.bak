@@ -1,0 +1,778 @@
+import 'package:flutter/material.dart';
+
+class MainShellPage extends StatefulWidget {
+  const MainShellPage({super.key});
+
+  @override
+  State<MainShellPage> createState() => _MainShellPageState();
+}
+
+class _MainShellPageState extends State<MainShellPage> {
+  int _tab = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF070B14),
+      body: SafeArea(
+        child: IndexedStack(
+          index: _tab,
+          children: const [
+            _HomeTab(),
+            _CreateTab(),
+            _LibraryTab(),
+            _MarketTab(),
+            _SettingsTab(),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _BottomBar(
+        index: _tab,
+        onChanged: (i) => setState(() => _tab = i),
+      ),
+    );
+  }
+}
+
+class _HomeTab extends StatelessWidget {
+  const _HomeTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final pad = MediaQuery.of(context).size.width >= 420 ? 20.0 : 16.0;
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(pad, 16, pad, 110),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          _TopBar(),
+          SizedBox(height: 14),
+          _PremiumCard(),
+          SizedBox(height: 18),
+          Text(
+            "Create",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 10),
+          _CreateCard(),
+          SizedBox(height: 18),
+          Text(
+            "Essentials",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 10),
+          _EssentialsGrid(),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopBar extends StatelessWidget {
+  const _TopBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _Glass(
+          radius: 14,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: const [
+              Icon(Icons.blur_on_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text(
+                "LumiAI",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Spacer(),
+        _Glass(
+          radius: 14,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: const [
+              Icon(Icons.bolt_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 6),
+              Text(
+                "128",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        _IconGlass(icon: Icons.notifications_none_rounded, onTap: () {}),
+      ],
+    );
+  }
+}
+
+class _PremiumCard extends StatelessWidget {
+  const _PremiumCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _Glass(
+      radius: 22,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Premium Ultra",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  "Rakiplerden hafif, ama prod-ready temel yapı.",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          _IconGlass(icon: Icons.auto_awesome_rounded, size: 54, onTap: null),
+        ],
+      ),
+    );
+  }
+}
+
+class _CreateCard extends StatefulWidget {
+  const _CreateCard();
+
+  @override
+  State<_CreateCard> createState() => _CreateCardState();
+}
+
+class _CreateCardState extends State<_CreateCard> {
+  final TextEditingController _c = TextEditingController();
+  String _mode = "Photo";
+  final Set<String> _chips = {
+    "Ultra",
+    "Cinematic",
+    "Clean face",
+    "4K",
+    "No blur",
+  };
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _Glass(
+      radius: 26,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.tune_rounded, color: Colors.white70, size: 18),
+              const SizedBox(width: 10),
+              const Text(
+                "Mode",
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const Spacer(),
+              _ModeDropdown(
+                value: _mode,
+                onChanged: (v) => setState(() => _mode = v),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _PromptBox(controller: _c),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: _chips.map((t) {
+                final selected = _chips.contains(t);
+                return _Chip(text: t, selected: selected, onTap: () {});
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // OVERFLOW FIX: bu satır wrap + Expanded/FittedBox ile garanti taşmıyor
+          Row(
+            children: const [
+              Expanded(
+                child: _QuickAction(
+                  icon: Icons.image_outlined,
+                  label: "Import",
+                ),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: _QuickAction(
+                  icon: Icons.layers_outlined,
+                  label: "Templates",
+                ),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: _QuickAction(icon: Icons.shield_outlined, label: "Safe"),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _PrimaryButton(label: "GENERATE", onTap: () {}),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModeDropdown extends StatelessWidget {
+  final String value;
+  final ValueChanged<String> onChanged;
+
+  const _ModeDropdown({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return _Glass(
+      radius: 18,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          dropdownColor: const Color(0xFF0B1020),
+          iconEnabledColor: Colors.white70,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w900,
+          ),
+          items: const [
+            DropdownMenuItem(value: "Photo", child: Text("Photo")),
+            DropdownMenuItem(value: "Avatar", child: Text("Avatar")),
+            DropdownMenuItem(value: "Video", child: Text("Video")),
+            DropdownMenuItem(value: "Logo", child: Text("Logo")),
+          ],
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _PromptBox extends StatelessWidget {
+  final TextEditingController controller;
+  const _PromptBox({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return _Glass(
+      radius: 20,
+      padding: const EdgeInsets.all(12),
+      child: TextField(
+        controller: controller,
+        maxLines: 4,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+        ),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText:
+              "Prompt yaz… (ör: neon premium avatar, cinematic light, ultra detail)",
+          hintStyle: TextStyle(
+            color: Colors.white.withOpacity(0.28),
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String text;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _Chip({
+    required this.text,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? const Color(0xFF3D7BFF) : const Color(0xFF1C2338),
+          ),
+          color: selected ? const Color(0xFF0E1B3A) : const Color(0xFF0A1020),
+        ),
+        child: Text(
+          text,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.white70,
+            fontWeight: FontWeight.w900,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _QuickAction({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return _Glass(
+      radius: 20,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white70, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PrimaryButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _PrimaryButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(22),
+      onTap: onTap,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF3D7BFF), Color(0xFF7B3DFF)],
+          ),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x66000000),
+              blurRadius: 18,
+              offset: Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.2,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EssentialsGrid extends StatelessWidget {
+  const _EssentialsGrid();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const [
+        Row(
+          children: [
+            Expanded(
+              child: _EssentialCard(
+                icon: Icons.face_retouching_natural_rounded,
+                title: "Avatar",
+                subtitle: "Face + style",
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: _EssentialCard(
+                icon: Icons.movie_creation_outlined,
+                title: "Video",
+                subtitle: "Short / Reel",
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _EssentialCard(
+                icon: Icons.graphic_eq_rounded,
+                title: "Voice",
+                subtitle: "TTS / Clone",
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: _EssentialCard(
+                icon: Icons.storefront_outlined,
+                title: "Market+",
+                subtitle: "Packs",
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _EssentialCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _EssentialCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _Glass(
+      radius: 22,
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          _IconGlass(icon: icon, onTap: null),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white60,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: Colors.white24),
+        ],
+      ),
+    );
+  }
+}
+
+class _IconGlass extends StatelessWidget {
+  final IconData icon;
+  final double size;
+  final VoidCallback? onTap;
+
+  const _IconGlass({required this.icon, this.size = 44, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: const Color(0xFF0B1020),
+          border: Border.all(color: const Color(0xFF1C2338)),
+        ),
+        child: Icon(icon, color: Colors.white, size: size * 0.42),
+      ),
+    );
+  }
+}
+
+class _Glass extends StatelessWidget {
+  final Widget child;
+  final double radius;
+  final EdgeInsets padding;
+
+  const _Glass({
+    required this.child,
+    required this.radius,
+    required this.padding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0A1020),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: const Color(0xFF1C2338)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x66000000),
+            blurRadius: 20,
+            offset: Offset(0, 14),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _BottomBar extends StatelessWidget {
+  final int index;
+  final ValueChanged<int> onChanged;
+
+  const _BottomBar({required this.index, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 84,
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
+      decoration: const BoxDecoration(
+        color: Color(0xFF050914),
+        border: Border(top: BorderSide(color: Color(0xFF141B2E))),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _NavItem(
+              icon: Icons.home_rounded,
+              label: "Home",
+              selected: index == 0,
+              onTap: () => onChanged(0),
+            ),
+          ),
+          Expanded(
+            child: _NavItem(
+              icon: Icons.add_circle_outline_rounded,
+              label: "Create",
+              selected: index == 1,
+              onTap: () => onChanged(1),
+            ),
+          ),
+          Expanded(
+            child: _NavItem(
+              icon: Icons.folder_open_rounded,
+              label: "Library",
+              selected: index == 2,
+              onTap: () => onChanged(2),
+            ),
+          ),
+          Expanded(
+            child: _NavItem(
+              icon: Icons.storefront_rounded,
+              label: "Market",
+              selected: index == 3,
+              onTap: () => onChanged(3),
+            ),
+          ),
+          Expanded(
+            child: _NavItem(
+              icon: Icons.settings_rounded,
+              label: "Settings",
+              selected: index == 4,
+              onTap: () => onChanged(4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          color: selected ? const Color(0xFF0E1B3A) : Colors.transparent,
+          border: Border.all(
+            color: selected ? const Color(0xFF3D7BFF) : Colors.transparent,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: selected ? Colors.white : Colors.white54),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: selected ? Colors.white : Colors.white54,
+                fontWeight: FontWeight.w900,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CreateTab extends StatelessWidget {
+  const _CreateTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        "Create (next: full flow)",
+        style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+class _LibraryTab extends StatelessWidget {
+  const _LibraryTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        "Library (history / favorites)",
+        style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+class _MarketTab extends StatelessWidget {
+  const _MarketTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        "Market+ (packs / prompts)",
+        style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+class _SettingsTab extends StatelessWidget {
+  const _SettingsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Text(
+        "Settings (i18n / account / premium)",
+        style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
